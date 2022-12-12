@@ -1,5 +1,5 @@
 {
-  "name": "podium-contracts",
+  "name": "podium-algorithm",
   "scripts": {
     "deploy:mainnet:podium": "npx hardhat run scripts/deploy-podium.js --network mainnet",
     "upgrade:mainnet:podium": "npx hardhat run scripts/upgrade-podium.js --network mainnet"
@@ -19,6 +19,7 @@
     "@ethersphere/bee-js": "^2.1.1",
     "@openzeppelin/contracts": "^4.3.2",
     "@openzeppelin/truffle-upgrades": "^1.15.0",
-    "@openzeppelin/upgrades-core": "^1.14.2"
+    "@openzeppelin/upgrades-core": "^1.14.2",
+    "dotenv": "^16.0.3"
   }
 }

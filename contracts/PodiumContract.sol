@@ -7,119 +7,93 @@ pragma solidity ^0.8.0;
  / /_)/ _ \ / _` | | | | | '_ ` _ \ 
 / ___/ (_) | (_| | | |_| | | | | | |
 \/    \___/ \__,_|_|\__,_|_| |_| |_|
-                                     
+
+                                v1.0
 */
 
 contract PodiumContract {
-
-    struct StoryStruct {
-        uint index;
-        address owner;
-        string text;
-        string[] images;
-        uint256 timestamp;
+    struct Voter {
+        bool voteSpent; // if true, that person already used their vote
+        uint256 voteIndex; // index of the proposal that was voted for
     }
 
-    struct UserStruct {
-        uint index;
-        address userAddress;
-        string username;
-        string avatar;
-        address[] following;
-        string bio;
+    struct VoteProposal {
+        string proposalName;
+        uint256 voteYesCount;
+        uint256 voteNoCount;
     }
 
-    struct PostsStruct {
-        StoryStruct[] post;
-        UserStruct profile;
-    }
-  
-    mapping(address => UserStruct) private userStructs;
-    mapping(string => UserStruct) private usernames;
-    mapping(address => StoryStruct[]) private stories;
-    
-    address[] private userIndex;
-    StoryStruct[] private storyIndex;
+    mapping(address => Voter) public voters;
 
-    function store(address adminAddress) public {
-        address[] memory emptyFollowing;
-        UserStruct memory adminUser = UserStruct(1, adminAddress, 'admin', '', emptyFollowing, '');
-        userStructs[adminAddress] = adminUser;
-        usernames['admin'] = adminUser;
-        userIndex.push(adminAddress);
-    }
-    
-    function isUser(address userAddress) public view returns(bool isIndeed) {
-        return userStructs[userAddress].index > 0;
-    }
-    
-    function getIndexByUsername(string memory username) public view returns(uint index) {
-        require(userIndex.length != 0);
-        return usernames[username].index;
-    }
-    
-    function getUserByUsername(string memory username) public view returns(UserStruct memory user) {
-        require(userIndex.length != 0);
-        return usernames[username];
+    // Vote proposal
+    VoteProposal[] public proposals;
+
+    // Contract creator address
+    address creator;
+
+    // Minimum and maximum length of profile username
+    uint256 usernameMinLength;
+    uint256 usernameMaxLength;
+
+    // Banned profiles
+    string[] bannedProfiles;
+
+    function createVoting(string memory title) public {
+        proposals.push(VoteProposal(title, 0, 0));
     }
 
-    function getUsernameByAddress(address userAddress) public view returns(string memory username) {
-        require(userIndex.length != 0);
-        return userStructs[userAddress].username;
-    }
-    
-    function getUser(address userAddress) public view returns(UserStruct memory userStruct) {
-        return userStructs[userAddress];
-    }
+    function voteIndex(uint256 proposal) public {
+        Voter storage sender = voters[msg.sender];
+        require(!sender.voteSpent);
+        sender.voteSpent = true;
+        sender.voteIndex = proposal;
 
-    function addStory(string memory text, string[] memory images, uint256 timestamp) public returns(uint index) {
-        bytes memory bytesText = bytes(text);
-        require(bytesText.length != 0);
-        uint idx = storyIndex.length + 1;
-        StoryStruct memory story = StoryStruct(idx, msg.sender, text, images, timestamp);
-        storyIndex.push(story);
-        stories[msg.sender].push(story);
-        return idx;
+        // If 'proposal' is out of the range of the array,
+        // this will throw automatically and revert all
+        // changes.
+        proposals[proposal].voteYesCount += 1;
     }
 
-    function updateProfile(string memory username, string memory avatar, address[] memory following, string memory bio) public returns(bool index) {
-        require(!isUsernameTaken(username));
-        if(!isUser(msg.sender)) {
-            userIndex.push(msg.sender);
-        }
-
-        string memory oldUsername = userStructs[msg.sender].username;
-        UserStruct memory user = UserStruct(userIndex.length, msg.sender, username, avatar, following, bio);
-        userStructs[msg.sender] = user;
-        delete usernames[oldUsername];
-        usernames[username] = user;
-
-        return true;
+    function getVotingStatus(uint256 proposal)
+        public
+        view
+        returns (VoteProposal memory)
+    {
+        return proposals[proposal];
     }
 
-    function getProfiles() public view returns(UserStruct[] memory profiles) {
-        UserStruct[] memory users = new UserStruct[](userIndex.length);
-        for (uint i=0; i<userIndex.length; i++) {
-            users[i] = userStructs[userIndex[i]];
-        }
-        return users;
+    function setUsernameMinLength(uint256 length) public onlyOwner {
+        usernameMinLength = length;
     }
 
-    function getStories(address[] memory following) public view returns(PostsStruct[] memory resultStories) {
-        PostsStruct[] memory data = new PostsStruct[](storyIndex.length+1);
-        for (uint i=0; i<following.length; i++) {
-            StoryStruct[] memory story = stories[following[i]];
-            UserStruct memory user = userStructs[following[i]];
-            data[i] = PostsStruct(story, user);
-        }
-        return data;
+    function getUsernameMinimumLength() public view returns (uint256) {
+        return usernameMinLength;
     }
 
-    function getStoriesForAddress(address userAddress) public view returns(UserStruct memory profile, StoryStruct[] memory userStories) {
-        return (userStructs[userAddress], stories[userAddress]);
+    function setUsernameMaxLength(uint256 length) public onlyOwner {
+        usernameMaxLength = length;
     }
-    
-    function isUsernameTaken(string memory username) public view returns(bool isTaken) {
-        return msg.sender != usernames[username].userAddress && usernames[username].index > 0;
+
+    function getUsernameMaxLength() public view returns (uint256) {
+        return usernameMaxLength;
+    }
+
+    function banProfile(string memory id) public onlyOwner {
+        bannedProfiles.push(id);
+    }
+
+    function getBannedProfiles() public view returns (string[] memory) {
+        return bannedProfiles;
+    }
+
+    function store() public onlyOwner {
+        usernameMinLength = 3;
+        usernameMaxLength = 24;
+    }
+
+    // Modifier to check that the caller is the owner of the contract.
+    modifier onlyOwner() {
+        require(msg.sender == creator, "Not owner");
+        _;
     }
 }

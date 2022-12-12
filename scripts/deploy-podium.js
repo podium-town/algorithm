@@ -8,7 +8,7 @@ async function main() {
   console.log("Estimated gas:");
   console.log(estimation);
   console.log("Deploying Podium Contract...");
-  const podium = await upgrades.deployProxy(Podium, ["<ADMIN_PUBLIC_KEY>"], {
+  const podium = await upgrades.deployProxy(Podium, [process.env.PUBLIC_KEY], {
     initializer: "store",
   });
   await podium.deployed();
