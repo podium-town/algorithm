@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 pragma solidity ^0.8.0;
 
 /*
@@ -11,7 +13,7 @@ pragma solidity ^0.8.0;
                                 v1.0
 */
 
-contract PodiumContract {
+contract PodiumContract is Initializable {
     struct Voter {
         bool voteSpent; // if true, that person already used their vote
         uint256 voteIndex; // index of the proposal that was voted for
@@ -86,7 +88,8 @@ contract PodiumContract {
         return bannedProfiles;
     }
 
-    function store() public onlyOwner {
+    function initialize() public initializer {
+        creator = msg.sender;
         usernameMinLength = 3;
         usernameMaxLength = 24;
     }

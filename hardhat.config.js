@@ -15,6 +15,7 @@ module.exports = {
     mainnet: {
       url: process.env.RPC_URL,
       accounts: [process.env.PRIVATE_KEY],
+      gas: 5300000,
     },
   },
 };

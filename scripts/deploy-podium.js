@@ -1,4 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
+const { config } = require("dotenv");
+
+config();
 
 async function main() {
   const Podium = await ethers.getContractFactory("PodiumContract");
@@ -6,11 +9,9 @@ async function main() {
     Podium.getDeployTransaction().data
   );
   console.log("Estimated gas:");
-  console.log(estimation);
+  console.log(estimation.toNumber());
   console.log("Deploying Podium Contract...");
-  const podium = await upgrades.deployProxy(Podium, [process.env.PUBLIC_KEY], {
-    initializer: "store",
-  });
+  const podium = await upgrades.deployProxy(Podium);
   await podium.deployed();
   console.log("Contract deployed to address:", podium.address);
 }
